@@ -1,4 +1,3 @@
-```python
 from pydantic import BaseModel
 
 
@@ -42,4 +41,3 @@ class MappingResponse(MappingBase):
 id: int
 class Config:
 orm_mode = True
-```
