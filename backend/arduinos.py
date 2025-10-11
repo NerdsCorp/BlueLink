@@ -1,4 +1,3 @@
-```python
 import serial
 import serial.tools.list_ports
 from time import sleep
@@ -22,4 +21,3 @@ self.connections[name] = ser
 def send(self, name, command):
 if name in self.connections:
 self.connections[name].write(f"{command}\n".encode())
-```
