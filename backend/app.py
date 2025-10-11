@@ -1,4 +1,3 @@
-```python
 from fastapi import FastAPI, Depends, WebSocket, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -69,4 +68,3 @@ app.mount("/", StaticFiles(directory="frontend_build", html=True), name="fronten
 @app.get("/{path:path}")
 async def serve_frontend():
 return FileResponse("frontend_build/index.html")
-```
