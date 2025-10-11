@@ -1,4 +1,3 @@
-```python
 from .database import Base, engine, SessionLocal
 from . import models, utils
 import os
@@ -18,4 +17,3 @@ db.commit()
 print(f"✅ Created admin user: {username} / {password}")
 else:
 print("Admin user already exists.")
-```
