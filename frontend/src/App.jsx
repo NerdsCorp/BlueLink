@@ -1,4 +1,3 @@
-```jsx
 import React, { useState } from 'react';
 import LoginForm from './components/LoginForm';
 import Dashboard from './components/Dashboard';
@@ -18,4 +17,3 @@ return (
 </div>
 );
 }
-```
