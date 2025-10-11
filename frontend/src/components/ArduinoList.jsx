@@ -1,4 +1,3 @@
-```jsx
 import React from 'react';
 export default function ArduinoList({ arduinos }) {
 return (
@@ -12,4 +11,3 @@ return (
 </div>
 );
 }
-```
