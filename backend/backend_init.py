@@ -1,19 +1,42 @@
-from .database import Base, engine, SessionLocal
-from . import models, utils
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 import os
 
+from models import Base, User, Controller, Arduino, Mapping
+from utils import get_password_hash
 
+# Load environment variables
+from dotenv import load_dotenv
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///bluelink.db")
+DEFAULT_ADMIN_USER = os.getenv("DEFAULT_ADMIN_USER", "admin")
+DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
+
+# --- Database setup ---
+engine = create_engine(DATABASE_URL, echo=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+db = SessionLocal()
+
+# --- Create tables ---
+print("📦 Creating tables...")
 Base.metadata.create_all(bind=engine)
 
+# --- Create default admin user ---
+print(f"🔑 Creating default admin user '{DEFAULT_ADMIN_USER}'...")
+existing_user = db.query(User).filter_by(username=DEFAULT_ADMIN_USER).first()
 
-db = SessionLocal()
-username = os.getenv("ADMIN_USERNAME", "admin")
-password = os.getenv("ADMIN_PASSWORD", "admin123")
-
-
-if not db.query(models.User).filter(models.User.username == username).first():
-db.add(models.User(username=username, password_hash=utils.get_password_hash(password)))
-db.commit()
-print(f"✅ Created admin user: {username} / {password}")
+if not existing_user:
+    admin_user = User(
+        username=DEFAULT_ADMIN_USER,
+        password_hash=get_password_hash(DEFAULT_ADMIN_PASSWORD)
+    )
+    db.add(admin_user)
+    db.commit()
+    print("✅ Admin user created")
 else:
-print("Admin user already exists.")
+    print("ℹ️ Admin user already exists")
+
+# --- Optional: initialize sample devices/mappings ---
+print("📦 Initialization complete!")
+db.close()
