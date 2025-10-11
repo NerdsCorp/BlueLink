@@ -1,4 +1,3 @@
-```python
 from sqlalchemy import Column, Integer, String, ForeignKey, JSON
 from sqlalchemy.orm import relationship
 from .database import Base
@@ -27,4 +26,3 @@ arduino_pin = Column(String)
 action = Column(String)
 config = Column(JSON, default={})
 arduino = relationship('Arduino')
-```
