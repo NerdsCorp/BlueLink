@@ -1,4 +1,3 @@
-```python
 from datetime import datetime, timedelta
 from jose import jwt, JWTError
 from fastapi import Depends, HTTPException, status
@@ -43,4 +42,3 @@ user = db.query(models.User).filter(models.User.username == username).first()
 if user is None:
 raise HTTPException(status_code=401)
 return user
-```
