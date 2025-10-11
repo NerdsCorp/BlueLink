@@ -1,16 +1,13 @@
 from passlib.context import CryptContext
 
-# Force pure-Python bcrypt to avoid system module bug
+# Only the supported arguments
 pwd_context = CryptContext(
     schemes=["bcrypt"],
-    deprecated="auto",
-    bcrypt__rounds=12,
-    bcrypt__ident="2b",
-    bcrypt__backend="python"  # Use pure-Python backend
+    deprecated="auto"
 )
 
 def get_password_hash(password: str) -> str:
-    # Truncate password to 72 bytes
+    # Truncate password to 72 bytes for bcrypt
     password_bytes = password.encode("utf-8")
     if len(password_bytes) > 72:
         password_bytes = password_bytes[:72]
