@@ -6,3 +6,4 @@ SQLAlchemy
 pydantic
 pyserial
 python-dotenv
+passlib[argon2]
