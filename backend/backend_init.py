@@ -10,8 +10,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///bluelink.db")
-DEFAULT_ADMIN_USER = os.getenv("DEFAULT_ADMIN_USER", "admin")
-DEFAULT_ADMIN_PASSWORD = os.getenv("DEFAULT_ADMIN_PASSWORD", "admin123")
+DEFAULT_ADMIN_USER = admin
+DEFAULT_ADMIN_PASSWORD = admin123
 
 # --- Database setup ---
 engine = create_engine(DATABASE_URL, echo=True)
