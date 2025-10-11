@@ -1,4 +1,3 @@
-```python
 import asyncio
 import evdev
 from fastapi import WebSocket
@@ -20,4 +19,3 @@ except Exception as e:
 print(f"Error: {e}")
 finally:
 connected_clients.remove(websocket)
-```
