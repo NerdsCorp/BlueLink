@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueLink Advanced Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover { background: rgba(255,255,255,0.3); }
+        .tab.active { background: white; color: #667eea; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            margin-bottom: 16px;
+            color: #333;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .login-form {
+            max-width: 400px;
+            margin: 100px auto;
+        }
+        
+        input, select, button, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        textarea { min-height: 100px; font-family: monospace; }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        button:hover { background: #5568d3; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .btn-small {
+            width: auto;
+            padding: 8px 16px;
+            font-size: 12px;
+            margin: 4px;
+            display: inline-block;
+        }
+        
+        .btn-danger { background: #e74c3c; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-success { background: #27ae60; }
+        .btn-success:hover { background: #229954; }
+        .btn-warning { background: #f39c12; }
+        .btn-warning:hover { background: #e67e22; }
+        
+        .item {
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .item-info { flex: 1; }
+        .item-info strong { display: block; color: #333; margin-bottom: 4px; font-size: 16px; }
+        .item-info span { color: #666; font-size: 14px; }
+        
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #667eea;
+            color: white;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 0 4px;
+        }
+        
+        .badge-pwm { background: #3498db; }
+        .badge-stepper { background: #e67e22; }
+        .badge-digital { background: #27ae60; }
+        
+        .hidden { display: none; }
+        
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+        }
+        
+        .error {
+            background: #fee;
+            color: #c33;
+            border-left: 4px solid #c33;
+        }
+        
+        .success {
+            background: #efe;
+            color: #3c3;
+            border-left: 4px solid #3c3;
+        }
+        
+        .info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border-left: 4px solid #1976d2;
+        }
+        
+        .logout-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: auto;
+            padding: 10px 20px;
+            z-index: 1000;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .slider-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .slider-container label {
+            min-width: 100px;
+            font-weight: 600;
+        }
+        
+        input[type="range"] {
+            flex: 1;
+            margin-bottom: 0;
+        }
+        
+        .slider-value {
+            min-width: 50px;
+            text-align: right;
+            font-weight: 600;
+            color: #667eea;
+        }
+        
+        .form-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .checkbox-group input[type="checkbox"] {
+            width: auto;
+            margin: 0;
+        }
+        
+        .file-upload {
+            border: 2px dashed #ddd;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .file-upload:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+        
+        .file-upload input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="login-form">
+        <div class="card">
+            <h2 style="text-align: center; color: #667eea;">💙 BlueLink Advanced</h2>
+            <p style="text-align: center; margin-bottom: 24px; color: #666;">PWM • Stepper • Firmware Upload</p>
+            <div id="loginMessage"></div>
+            <input type="text" id="username" placeholder="Username" value="admin">
+            <input type="password" id="password" placeholder="Password" value="admin123">
+            <button onclick="login()">Login</button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboard" class="hidden">
+        <button class="logout-btn" onclick="logout()">Logout</button>
+        
+        <div class="container">
+            <div class="header">
+                <h1>💙 BlueLink Advanced</h1>
+                <p>Arduino Control • PWM • Stepper Motors • Firmware Upload</p>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('basic')">🎛️ Basic Control</button>
+                <button class="tab" onclick="switchTab('pwm')">📊 PWM Control</button>
+                <button class="tab" onclick="switchTab('stepper')">⚙️ Stepper Motors</button>
+                <button class="tab" onclick="switchTab('mappings')">🔗 Advanced Mappings</button>
+                <button class="tab" onclick="switchTab('firmware')">📤 Firmware Upload</button>
+            </div>
+
+            <!-- BASIC CONTROL TAB -->
+            <div id="tab-basic" class="tab-content active">
+                <!-- Add Arduino -->
+                <div class="card">
+                    <h2>➕ Add Arduino</h2>
+                    <div id="arduinoMessage"></div>
+                    <select id="portSelect">
+                        <option value="">Select Serial Port</option>
+                    </select>
+                    <input type="text" id="arduinoName" placeholder="Arduino Name (e.g., Main Board)">
+                    <select id="boardType">
+                        <option value="uno">Arduino Uno</option>
+                        <option value="mega">Arduino Mega</option>
+                        <option value="nano">Arduino Nano</option>
+                    </select>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="addArduino()" style="flex: 1;">Add Arduino</button>
+                        <button onclick="refreshPorts()" class="btn-small">🔄 Refresh</button>
+                    </div>
+                </div>
+
+                <!-- Arduino List -->
+                <div class="card">
+                    <h2>🎛️ Connected Arduinos</h2>
+                    <div id="arduinoList"></div>
+                </div>
+
+                <!-- Pin Tester -->
+                <div class="card">
+                    <h2>🧪 Pin Tester</h2>
+                    <div id="pinTesterMessage"></div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px;">
+                        <select id="testArduinoSelect">
+                            <option value="">Select Arduino</option>
+                        </select>
+                        <input type="text" id="testPin" placeholder="Pin (e.g., 5, 13)">
+                        <button onclick="testPin()" class="btn-small btn-success">Test</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PWM CONTROL TAB -->
+            <div id="tab-pwm" class="tab-content">
+                <div class="card">
+                    <h2>📊 PWM Control</h2>
+                    <p style="color: #666; margin-bottom: 16px;">Control PWM-capable pins (3, 5, 6, 9, 10, 11 on Uno)</p>
+                    <div id="pwmMessage"></div>
+                    
+                    <select id="pwmArduinoSelect">
+                        <option value="">Select Arduino</option>
+                    </select>
+                    
+                    <select id="pwmPinSelect">
+                        <option value="">Select PWM Pin</option>
+                        <option value="3">Pin 3</option>
+                        <option value="5">Pin 5</option>
+                        <option value="6">Pin 6</option>
+                        <option value="9">Pin 9</option>
+                        <option value="10">Pin 10</option>
+                        <option value="11">Pin 11</option>
+                    </select>
+                    
+                    <div class="slider-container">
+                        <label>PWM Value:</label>
+                        <input type="range" id="pwmSlider" min="0" max="255" value="0" oninput="updatePWMValue()">
+                        <span class="slider-value" id="pwmValue">0</span>
+                    </div>
+                    
+                    <button onclick="sendPWM()" class="btn-success">Send PWM</button>
+                </div>
+
+                <div class="card">
+                    <h2>🎮 Joystick Mapping</h2>
+                    <p style="color: #666; margin-bottom: 16px;">Map joystick axes to PWM outputs</p>
+                    <input type="text" placeholder="Controller Input (e.g., LeftStickX, RightTrigger)" id="joystickInput">
+                    <div class="form-row">
+                        <select id="joystickArduinoSelect">
+                            <option value="">Select Arduino</option>
+                        </select>
+                        <input type="text" placeholder="PWM Pin" id="joystickPin">
+                    </div>
+                    <div class="form-row">
+                        <input type="number" placeholder="Min Value (0-255)" value="0" id="joystickMin">
+                        <input type="number" placeholder="Max Value (0-255)" value="255" id="joystickMax">
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="invertAxis">
+                        <label for="invertAxis">Invert Axis</label>
+                    </div>
+                    <button onclick="createJoystickMapping()">Create Mapping</button>
+                </div>
+            </div>
+
+            <!-- STEPPER CONTROL TAB -->
+            <div id="tab-stepper" class="tab-content">
+                <div class="card">
+                    <h2>⚙️ Stepper Motor Control</h2>
+                    <p style="color: #666; margin-bottom: 16px;">Control 4-wire stepper motors</p>
+                    <div id="stepperMessage"></div>
+                    
+                    <select id="stepperArduinoSelect">
+                        <option value="">Select Arduino</option>
+                    </select>
+                    
+                    <div class="form-row">
+                        <input type="text" id="stepperPin1" placeholder="Pin 1">
+                        <input type="text" id="stepperPin2" placeholder="Pin 2">
+                        <input type="text" id="stepperPin3" placeholder="Pin 3">
+                        <input type="text" id="stepperPin4" placeholder="Pin 4">
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label>Steps:</label>
+                        <input type="range" id="stepsSlider" min="-2000" max="2000" value="0" oninput="updateStepsValue()">
+                        <span class="slider-value" id="stepsValue">0</span>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <label>Speed (RPM):</label>
+                        <input type="range" id="speedSlider" min="1" max="200" value="60" oninput="updateSpeedValue()">
+                        <span class="slider-value" id="speedValue">60</span>
+                    </div>
+                    
+                    <button onclick="controlStepper()" class="btn-warning">Move Stepper</button>
+                </div>
+
+                <div class="card">
+                    <h2>📐 Stepper Presets</h2>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+                        <button onclick="quickStepper(200)" class="btn-success">+200 Steps</button>
+                        <button onclick="quickStepper(-200)" class="btn-danger">-200 Steps</button>
+                        <button onclick="quickStepper(400)" class="btn-success">Full Rotation</button>
+                        <button onclick="quickStepper(-400)" class="btn-danger">Reverse Full</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ADVANCED MAPPINGS TAB -->
+            <div id="tab-mappings" class="tab-content">
+                <div class="card">
+                    <h2>🔗 Create Advanced Mapping</h2>
+                    <div id="mappingMessage"></div>
+                    
+                    <input type="text" id="controllerInput" placeholder="Controller Input (A, B, LeftStickX, RightTrigger)">
+                    
+                    <select id="inputType">
+                        <option value="digital">Digital (Button)</option>
+                        <option value="analog">Analog (Axis)</option>
+                        <option value="pwm">PWM (Trigger/Stick)</option>
+                    </select>
+                    
+                    <select id="mappingArduinoSelect">
+                        <option value="">Select Arduino</option>
+                    </select>
+                    
+                    <input type="text" id="mappingPin" placeholder="Arduino Pin">
+                    
+                    <select id="pinMode">
+                        <option value="output">Digital Output</option>
+                        <option value="pwm">PWM Output</option>
+                        <option value="stepper">Stepper Motor</option>
+                    </select>
+                    
+                    <div id="advancedOptions" class="hidden">
+                        <h3 style="margin: 16px 0 8px 0;">Advanced Options</h3>
+                        <div class="form-row">
+                            <input type="number" id="minValue" placeholder="Min Value" value="0">
+                            <input type="number" id="maxValue" placeholder="Max Value" value="255">
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="invertMapping">
+                            <label for="invertMapping">Invert Values</label>
+                        </div>
+                    </div>
+                    
+                    <button onclick="toggleAdvanced()" class="btn-small">⚙️ Advanced Options</button>
+                    <button onclick="addMapping()">Create Mapping</button>
+                </div>
+
+                <div class="card">
+                    <h2>📋 Active Mappings</h2>
+                    <div id="mappingsList"></div>
+                </div>
+            </div>
+
+            <!-- FIRMWARE UPLOAD TAB -->
+            <div id="tab-firmware" class="tab-content">
+                <div class="card">
+                    <h2>📤 Upload Firmware to Arduino</h2>
+                    <div id="uploadMessage"></div>
+                    
+                    <p style="color: #666; margin-bottom: 16px;">
+                        Upload .ino or .hex files directly to your Arduino. Make sure arduino-cli is installed.
+                    </p>
+                    
+                    <select id="uploadPort">
+                        <option value="">Select Port</option>
+                    </select>
+                    
+                    <select id="uploadBoardType">
+                        <option value="arduino:avr:uno">Arduino Uno</option>
+                        <option value="arduino:avr:mega">Arduino Mega</option>
+                        <option value="arduino:avr:nano">Arduino Nano</option>
+                    </select>
+                    
+                    <div class="file-upload" onclick="document.getElementById('firmwareFile').click()">
+                        <input type="file" id="firmwareFile" accept=".ino,.hex" onchange="showFileName()">
+                        <p>📁 Click to select firmware file (.ino or .hex)</p>
+                        <p id="fileName" style="color: #667eea; font-weight: 600; margin-top: 8px;"></p>
+                    </div>
+                    
+                    <button onclick="uploadFirmware()" class="btn-warning">Upload Firmware</button>
+                    
+                    <hr style="margin: 24px 0; border: none; border-top: 1px solid #ddd;">
+                    
+                    <h3 style="margin-bottom: 12px;">📥 Download BlueLink Firmware</h3>
+                    <p style="color: #666; margin-bottom: 12px;">Get the default BlueLink firmware</p>
+                    <button onclick="downloadFirmware()" class="btn-success">Download BlueLink.ino</button>
+                </div>
+
+                <div class="card">
+                    <h2>ℹ️ Setup arduino-cli</h2>
+                    <p style="color: #666; margin-bottom: 12px;">To upload firmware, you need arduino-cli installed:</p>
+                    <textarea readonly style="background: #f8f9fa; color: #333; margin-bottom: 12px;">
+# Install arduino-cli
+curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+
+# Add to PATH (Linux/Mac)
+export PATH=$PATH:$HOME/bin
+
+# Install Arduino AVR boards
+arduino-cli core update-index
+arduino-cli core install arduino:avr</textarea>
+                    <p style="color: #666; font-size: 12px;">After installing, refresh this page to enable firmware upload.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem('token');
+        
+        if (token) {
+            showDashboard();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+        }
+
+        function toggleAdvanced() {
+            document.getElementById('advancedOptions').classList.toggle('hidden');
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (!response.ok) throw new Error('Invalid credentials');
+                
+                const data = await response.json();
+                token = data.access_token;
+                localStorage.setItem('token', token);
+                showDashboard();
+            } catch (error) {
+                showMessage('loginMessage', error.message, 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            token = null;
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+        }
+
+        function showDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            init();
+        }
+
+        async function init() {
+            await refreshPorts();
+            await loadArduinos();
+            await loadMappings();
+        }
+
+        function showMessage(elementId, message, type = 'success') {
+            const div = document.getElementById(elementId);
+            div.innerHTML = `<div class="message ${type}">${message}</div>`;
+            setTimeout(() => div.innerHTML = '', 5000);
+        }
+
+        async function refreshPorts() {
+            try {
+                const response = await fetch('/api/ports', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const ports = await response.json();
+                
+                const selects = ['portSelect', 'uploadPort'];
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    select.innerHTML = '<option value="">Select Serial Port</option>';
+                    
+                    ports.forEach(port => {
+                        const option = document.createElement('option');
+                        option.value = port.device;
+                        option.textContent = `${port.device} - ${port.description}`;
+                        select.appendChild(option);
+                    });
+                });
+            } catch (error) {
+                console.error('Error loading ports:', error);
+            }
+        }
+
+        async function addArduino() {
+            const name = document.getElementById('arduinoName').value;
+            const port = document.getElementById('portSelect').value;
+            const boardType = document.getElementById('boardType').value;
+            
+            if (!name || !port) {
+                showMessage('arduinoMessage', 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            try {
+                const response = await fetch('/api/arduinos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, serial_port: port, board_type: boardType })
+                });
+                
+                if (response.ok) {
+                    showMessage('arduinoMessage', '✅ Arduino added successfully!');
+                    document.getElementById('arduinoName').value = '';
+                    await loadArduinos();
+                } else {
+                    showMessage('arduinoMessage', 'Failed to add Arduino', 'error');
+                }
+            } catch (error) {
+                showMessage('arduinoMessage', error.message, 'error');
+            }
+        }
+
+        async function deleteArduino(id, name) {
+            if (!confirm(`Delete Arduino "${name}"?`)) return;
+            
+            try {
+                await fetch(`/api/arduinos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await loadArduinos();
+                await loadMappings();
+            } catch (error) {
+                console.error('Error deleting Arduino:', error);
+            }
+        }
+
+        async function loadArduinos() {
+            try {
+                const response = await fetch('/api/arduinos', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const arduinos = await response.json();
+                
+                const list = document.getElementById('arduinoList');
+                const selects = ['testArduinoSelect', 'pwmArduinoSelect', 'stepperArduinoSelect', 'mappingArduinoSelect', 'joystickArduinoSelect'];
+                
+                if (arduinos.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div style="font-size: 48px;">🎛️</div><p>No Arduinos connected</p></div>';
+                } else {
+                    list.innerHTML = arduinos.map(a => `
+                        <div class="item">
+                            <div class="item-info">
+                                <strong>${a.name}</strong>
+                                <span>Port: ${a.serial_port} • Board: ${a.board_type} • ID: ${a.id}</span>
+                            </div>
+                            <button onclick="deleteArduino(${a.id}, '${a.name}')" class="btn-small btn-danger">Delete</button>
+                        </div>
+                    `).join('');
+                }
+                
+                selects.forEach(selectId => {
+                    const select = document.getElementById(selectId);
+                    if (select) {
+                        select.innerHTML = '<option value="">Select Arduino</option>';
+                        arduinos.forEach(a => {
+                            const option = document.createElement('option');
+                            option.value = a.id;
+                            option.textContent = a.name;
+                            select.appendChild(option);
+                        });
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading arduinos:', error);
+            }
+        }
+
+        async function testPin() {
+            const arduinoId = document.getElementById('testArduinoSelect').value;
+            const pin = document.getElementById('testPin').value;
+            
+            if (!arduinoId || !pin) {
+                showMessage('pinTesterMessage', 'Please select Arduino and enter pin', 'error');
+                return;
+            }
+            
+            try {
+                await fetch('/api/test-pin', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ arduino_id: parseInt(arduinoId), pin })
+                });
+                showMessage('pinTesterMessage', `✅ Test signal sent to pin ${pin}`);
+            } catch (error) {
+                showMessage('pinTesterMessage', error.message, 'error');
+            }
+        }
+
+        function updatePWMValue() {
+            document.getElementById('pwmValue').textContent = document.getElementById('pwmSlider').value;
+        }
+
+        function updateStepsValue() {
+            document.getElementById('stepsValue').textContent = document.getElementById('stepsSlider').value;
+        }
+
+        function updateSpeedValue() {
+            document.getElementById('speedValue').textContent = document.getElementById('speedSlider').value;
+        }
+
+        async function sendPWM() {
+            const arduinoId = document.getElementById('pwmArduinoSelect').value;
+            const pin = document.getElementById('pwmPinSelect').value;
+            const value = document.getElementById('pwmSlider').value;
+            
+            if (!arduinoId || !pin) {
+                showMessage('pwmMessage', 'Please select Arduino and pin', 'error');
+                return;
+            }
+            
+            try {
+                await fetch('/api/pwm', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ arduino_id: parseInt(arduinoId), pin, value: parseInt(value) })
+                });
+                showMessage('pwmMessage', `✅ PWM ${value} sent to pin ${pin}`);
+            } catch (error) {
+                showMessage('pwmMessage', error.message, 'error');
+            }
+        }
+
+        async function createJoystickMapping() {
+            const input = document.getElementById('joystickInput').value;
+            const arduinoId = document.getElementById('joystickArduinoSelect').value;
+            const pin = document.getElementById('joystickPin').value;
+            const minVal = document.getElementById('joystickMin').value;
+            const maxVal = document.getElementById('joystickMax').value;
+            const invert = document.getElementById('invertAxis').checked;
+            
+            if (!input || !arduinoId || !pin) {
+                showMessage('pwmMessage', 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            const mapping = {
+                controller_input: input,
+                input_type: 'pwm',
+                arduino_id: parseInt(arduinoId),
+                arduino_pin: pin,
+                pin_mode: 'pwm',
+                min_value: parseInt(minVal),
+                max_value: parseInt(maxVal),
+                invert: invert
+            };
+            
+            try {
+                const response = await fetch('/api/mappings', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(mapping)
+                });
+                
+                if (response.ok) {
+                    showMessage('pwmMessage', '✅ Joystick mapping created!');
+                    document.getElementById('joystickInput').value = '';
+                    document.getElementById('joystickPin').value = '';
+                    await loadMappings();
+                } else {
+                    showMessage('pwmMessage', 'Failed to create mapping', 'error');
+                }
+            } catch (error) {
+                showMessage('pwmMessage', error.message, 'error');
+            }
+        }
+
+        async function controlStepper() {
+            const arduinoId = document.getElementById('stepperArduinoSelect').value;
+            const pins = [
+                document.getElementById('stepperPin1').value,
+                document.getElementById('stepperPin2').value,
+                document.getElementById('stepperPin3').value,
+                document.getElementById('stepperPin4').value
+            ];
+            const steps = parseInt(document.getElementById('stepsSlider').value);
+            const speed = parseInt(document.getElementById('speedSlider').value);
+            
+            if (!arduinoId || pins.some(p => !p)) {
+                showMessage('stepperMessage', 'Please fill in all fields', 'error');
+                return;
+            }
+            
+            try {
+                await fetch('/api/stepper', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        arduino_id: parseInt(arduinoId), 
+                        pins, 
+                        steps, 
+                        speed 
+                    })
+                });
+                showMessage('stepperMessage', `✅ Stepper moved ${steps} steps at ${speed} RPM`);
+            } catch (error) {
+                showMessage('stepperMessage', error.message, 'error');
+            }
+        }
+
+        async function quickStepper(steps) {
+            const arduinoId = document.getElementById('stepperArduinoSelect').value;
+            const pins = [
+                document.getElementById('stepperPin1').value,
+                document.getElementById('stepperPin2').value,
+                document.getElementById('stepperPin3').value,
+                document.getElementById('stepperPin4').value
+            ];
+            const speed = 60;
+            
+            if (!arduinoId || pins.some(p => !p)) {
+                showMessage('stepperMessage', 'Please configure stepper pins first', 'error');
+                return;
+            }
+            
+            try {
+                await fetch('/api/stepper', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ arduino_id: parseInt(arduinoId), pins, steps, speed })
+                });
+                showMessage('stepperMessage', `✅ Quick move: ${steps} steps`);
+            } catch (error) {
+                showMessage('stepperMessage', error.message, 'error');
+            }
+        }
+
+        async function addMapping() {
+            const controllerInput = document.getElementById('controllerInput').value;
+            const inputType = document.getElementById('inputType').value;
+            const arduinoId = parseInt(document.getElementById('mappingArduinoSelect').value);
+            const pin = document.getElementById('mappingPin').value;
+            const pinMode = document.getElementById('pinMode').value;
+            
+            if (!controllerInput || !arduinoId || !pin) {
+                showMessage('mappingMessage', 'Please fill in all required fields', 'error');
+                return;
+            }
+            
+            const mapping = {
+                controller_input: controllerInput,
+                input_type: inputType,
+                arduino_id: arduinoId,
+                arduino_pin: pin,
+                pin_mode: pinMode,
+                min_value: parseInt(document.getElementById('minValue').value) || 0,
+                max_value: parseInt(document.getElementById('maxValue').value) || 255,
+                invert: document.getElementById('invertMapping').checked
+            };
+            
+            try {
+                const response = await fetch('/api/mappings', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(mapping)
+                });
+                
+                if (response.ok) {
+                    showMessage('mappingMessage', '✅ Mapping created successfully!');
+                    document.getElementById('controllerInput').value = '';
+                    document.getElementById('mappingPin').value = '';
+                    await loadMappings();
+                } else {
+                    showMessage('mappingMessage', 'Failed to create mapping', 'error');
+                }
+            } catch (error) {
+                showMessage('mappingMessage', error.message, 'error');
+            }
+        }
+
+        async function deleteMapping(id) {
+            if (!confirm('Delete this mapping?')) return;
+            
+            try {
+                await fetch(`/api/mappings/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                await loadMappings();
+            } catch (error) {
+                console.error('Error deleting mapping:', error);
+            }
+        }
+
+        async function loadMappings() {
+            try {
+                const response = await fetch('/api/mappings', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const mappings = await response.json();
+                
+                const list = document.getElementById('mappingsList');
+                
+                if (mappings.length === 0) {
+                    list.innerHTML = '<div class="empty-state"><div style="font-size: 48px;">🔗</div><p>No mappings created</p></div>';
+                } else {
+                    list.innerHTML = mappings.map(m => {
+                        let badge = '';
+                        if (m.pin_mode === 'pwm') badge = '<span class="badge badge-pwm">PWM</span>';
+                        else if (m.pin_mode === 'stepper') badge = '<span class="badge badge-stepper">STEPPER</span>';
+                        else badge = '<span class="badge badge-digital">DIGITAL</span>';
+                        
+                        return `
+                            <div class="item">
+                                <div class="item-info">
+                                    <strong>${m.controller_input} ${badge}</strong>
+                                    <span>Pin: ${m.arduino_pin} • Arduino ID: ${m.arduino_id} • Type: ${m.input_type}</span>
+                                </div>
+                                <button onclick="deleteMapping(${m.id})" class="btn-small btn-danger">Delete</button>
+                            </div>
+                        `;
+                    }).join('');
+                }
+            } catch (error) {
+                console.error('Error loading mappings:', error);
+            }
+        }
+
+        function showFileName() {
+            const file = document.getElementById('firmwareFile').files[0];
+            if (file) {
+                document.getElementById('fileName').textContent = `Selected: ${file.name}`;
+            }
+        }
+
+        async function uploadFirmware() {
+            const fileInput = document.getElementById('firmwareFile');
+            const port = document.getElementById('uploadPort').value;
+            const boardType = document.getElementById('uploadBoardType').value;
+            
+            if (!fileInput.files[0]) {
+                showMessage('uploadMessage', 'Please select a firmware file', 'error');
+                return;
+            }
+            
+            if (!port) {
+                showMessage('uploadMessage', 'Please select a port', 'error');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('port', port);
+            formData.append('board_type', boardType);
+            
+            showMessage('uploadMessage', '⏳ Uploading firmware... This may take a minute.', 'info');
+            
+            try {
+                const response = await fetch('/api/upload-firmware', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showMessage('uploadMessage', '✅ ' + result.message, 'success');
+                } else {
+                    showMessage('uploadMessage', '❌ ' + result.message + (result.error ? '<br><pre>' + result.error + '</pre>' : ''), 'error');
+                }
+            } catch (error) {
+                showMessage('uploadMessage', '❌ Upload failed: ' + error.message, 'error');
+            }
+        }
+
+        async function downloadFirmware() {
+            try {
+                const response = await fetch('/api/firmware/bluelink.ino');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'BlueLink.ino';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (error) {
+                alert('Could not download firmware file');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const passwordField = document.getElementById('password');
+            if (passwordField) {
+                passwordField.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') login();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
