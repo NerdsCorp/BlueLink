@@ -1,9 +1,0 @@
-fastapi
-uvicorn
-python-jose[cryptography]
-passlib[bcrypt]
-SQLAlchemy
-pydantic
-pyserial
-python-dotenv
-passlib[argon2]
