@@ -30,7 +30,18 @@ import tempfile
 # ============================================================================
 SECRET_KEY = os.getenv("SECRET_KEY", "supersecretkey-change-in-production")
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bluelink.db")
-JWT_EXPIRE_MINUTES = 60
+JWT_EXPIRE_MINUTES = int(os.getenv("JWT_EXPIRE_MINUTES", "60"))
+ARDUINO_BAUD_RATE = int(os.getenv("ARDUINO_BAUD_RATE", "115200"))
+ARDUINO_TIMEOUT = int(os.getenv("ARDUINO_TIMEOUT", "1"))
+
+# Security warning for default SECRET_KEY
+if SECRET_KEY == "supersecretkey-change-in-production":
+    import warnings
+    warnings.warn(
+        "⚠️  WARNING: Using default SECRET_KEY! This is insecure for production. "
+        "Set SECRET_KEY environment variable or update .env file.",
+        category=UserWarning
+    )
 
 # ============================================================================
 # DATABASE MODELS
@@ -124,34 +135,61 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 class ArduinoManager:
     def __init__(self):
         self.connections = {}
-    
+
     def list_ports(self):
-        return [{"device": p.device, "description": p.description, "hwid": p.hwid} 
-                for p in serial.tools.list_ports.comports()]
-    
-    def connect(self, name, port):
+        """List all available serial ports"""
         try:
-            ser = serial.Serial(port, 115200, timeout=1)
-            self.connections[name] = ser
-            return True
+            return [{"device": p.device, "description": p.description, "hwid": p.hwid}
+                    for p in serial.tools.list_ports.comports()]
         except Exception as e:
-            print(f"Error connecting to {port}: {e}")
+            print(f"Error listing ports: {e}")
+            return []
+
+    def connect(self, name, port):
+        """Connect to an Arduino on the specified port"""
+        try:
+            # Close existing connection if any
+            if name in self.connections:
+                self.disconnect(name)
+
+            ser = serial.Serial(port, ARDUINO_BAUD_RATE, timeout=ARDUINO_TIMEOUT)
+            self.connections[name] = ser
+            print(f"✅ Connected to {name} on {port}")
+            return True
+        except serial.SerialException as e:
+            print(f"❌ Serial error connecting to {port}: {e}")
             return False
-    
+        except Exception as e:
+            print(f"❌ Unexpected error connecting to {port}: {e}")
+            return False
+
     def disconnect(self, name):
-        if name in self.connections:
-            self.connections[name].close()
-            del self.connections[name]
-    
-    def send(self, name, command):
+        """Disconnect from an Arduino"""
         if name in self.connections:
             try:
-                self.connections[name].write(f"{command}\n".encode())
-                return True
+                self.connections[name].close()
+                del self.connections[name]
+                print(f"✅ Disconnected from {name}")
             except Exception as e:
-                print(f"Error sending to {name}: {e}")
-                return False
-        return False
+                print(f"⚠️  Error disconnecting from {name}: {e}")
+
+    def send(self, name, command):
+        """Send a command to an Arduino"""
+        if name not in self.connections:
+            print(f"⚠️  Arduino '{name}' not connected")
+            return False
+
+        try:
+            self.connections[name].write(f"{command}\n".encode())
+            return True
+        except serial.SerialException as e:
+            print(f"❌ Serial error sending to {name}: {e}")
+            # Connection may be broken, remove it
+            self.disconnect(name)
+            return False
+        except Exception as e:
+            print(f"❌ Error sending to {name}: {e}")
+            return False
     
     def upload_firmware(self, port, hex_file_path, board_type="arduino:avr:uno"):
         """Upload firmware to Arduino using avrdude"""
@@ -272,9 +310,19 @@ class StepperCommand(BaseModel):
 # ============================================================================
 app = FastAPI(title="BlueLink Advanced", version="2.0")
 
+# CORS Configuration
+CORS_ORIGINS = os.getenv("CORS_ORIGINS", "*").split(",")
+if "*" in CORS_ORIGINS:
+    import warnings
+    warnings.warn(
+        "⚠️  WARNING: CORS is set to allow all origins (*). "
+        "This is insecure for production. Set CORS_ORIGINS in .env file.",
+        category=UserWarning
+    )
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -318,12 +366,33 @@ def list_arduinos(db: Session = Depends(get_db), user = Depends(get_current_user
 
 @app.post("/api/arduinos")
 def add_arduino(arduino: ArduinoCreate, db: Session = Depends(get_db), user = Depends(get_current_user)):
-    ar = Arduino(**arduino.dict())
-    db.add(ar)
-    db.commit()
-    db.refresh(ar)
-    arduino_manager.connect(ar.name, ar.serial_port)
-    return ar
+    # Check if serial port is already in use
+    existing = db.query(Arduino).filter(Arduino.serial_port == arduino.serial_port).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Serial port {arduino.serial_port} is already in use by '{existing.name}'")
+
+    # Check if name is already taken
+    existing_name = db.query(Arduino).filter(Arduino.name == arduino.name).first()
+    if existing_name:
+        raise HTTPException(status_code=400, detail=f"Arduino name '{arduino.name}' is already in use")
+
+    try:
+        ar = Arduino(**arduino.dict())
+        db.add(ar)
+        db.commit()
+        db.refresh(ar)
+
+        # Try to connect to the Arduino
+        if not arduino_manager.connect(ar.name, ar.serial_port):
+            raise HTTPException(status_code=500, detail=f"Failed to connect to Arduino on {ar.serial_port}")
+
+        return ar
+    except HTTPException:
+        db.rollback()
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error adding Arduino: {str(e)}")
 
 @app.delete("/api/arduinos/{arduino_id}")
 def delete_arduino(arduino_id: int, db: Session = Depends(get_db), user = Depends(get_current_user)):
@@ -342,11 +411,30 @@ def get_mappings(db: Session = Depends(get_db), user = Depends(get_current_user)
 
 @app.post("/api/mappings")
 def add_mapping(mapping: MappingCreate, db: Session = Depends(get_db), user = Depends(get_current_user)):
-    m = Mapping(**mapping.dict())
-    db.add(m)
-    db.commit()
-    db.refresh(m)
-    return m
+    # Validate that the Arduino exists
+    ar = db.query(Arduino).filter(Arduino.id == mapping.arduino_id).first()
+    if not ar:
+        raise HTTPException(status_code=404, detail=f"Arduino with ID {mapping.arduino_id} not found")
+
+    # Check if this controller input is already mapped
+    existing = db.query(Mapping).filter(
+        Mapping.controller_input == mapping.controller_input
+    ).first()
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Controller input '{mapping.controller_input}' is already mapped"
+        )
+
+    try:
+        m = Mapping(**mapping.dict())
+        db.add(m)
+        db.commit()
+        db.refresh(m)
+        return m
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error creating mapping: {str(e)}")
 
 @app.delete("/api/mappings/{mapping_id}")
 def delete_mapping(mapping_id: int, db: Session = Depends(get_db), user = Depends(get_current_user)):
@@ -361,13 +449,19 @@ def delete_mapping(mapping_id: int, db: Session = Depends(get_db), user = Depend
 def test_pin(data: dict, db: Session = Depends(get_db), user = Depends(get_current_user)):
     arduino_id = data.get("arduino_id")
     pin = data.get("pin")
-    
+
+    if not arduino_id or not pin:
+        raise HTTPException(status_code=400, detail="Missing arduino_id or pin")
+
     ar = db.query(Arduino).filter(Arduino.id == arduino_id).first()
     if not ar:
         raise HTTPException(status_code=404, detail="Arduino not found")
-    
+
     success = arduino_manager.send(ar.name, f"TEST:{pin}")
-    return {"status": "sent" if success else "failed"}
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Failed to send command to Arduino '{ar.name}'")
+
+    return {"status": "sent", "arduino": ar.name, "pin": pin}
 
 @app.post("/api/pwm")
 def send_pwm(cmd: PWMCommand, db: Session = Depends(get_db), user = Depends(get_current_user)):
@@ -375,11 +469,15 @@ def send_pwm(cmd: PWMCommand, db: Session = Depends(get_db), user = Depends(get_
     ar = db.query(Arduino).filter(Arduino.id == cmd.arduino_id).first()
     if not ar:
         raise HTTPException(status_code=404, detail="Arduino not found")
-    
+
     # Clamp value
     value = max(0, min(255, cmd.value))
     success = arduino_manager.send(ar.name, f"PWM:{cmd.pin}:{value}")
-    return {"status": "sent" if success else "failed", "value": value}
+
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Failed to send PWM command to Arduino '{ar.name}'")
+
+    return {"status": "sent", "arduino": ar.name, "pin": cmd.pin, "value": value}
 
 @app.post("/api/stepper")
 def control_stepper(cmd: StepperCommand, db: Session = Depends(get_db), user = Depends(get_current_user)):
@@ -387,10 +485,18 @@ def control_stepper(cmd: StepperCommand, db: Session = Depends(get_db), user = D
     ar = db.query(Arduino).filter(Arduino.id == cmd.arduino_id).first()
     if not ar:
         raise HTTPException(status_code=404, detail="Arduino not found")
-    
+
+    # Validate pins list
+    if not cmd.pins or len(cmd.pins) < 2:
+        raise HTTPException(status_code=400, detail="At least 2 pins required for stepper motor")
+
     pins_str = ",".join(cmd.pins)
     success = arduino_manager.send(ar.name, f"STEPPER:{pins_str}:{cmd.steps}:{cmd.speed}")
-    return {"status": "sent" if success else "failed"}
+
+    if not success:
+        raise HTTPException(status_code=500, detail=f"Failed to send stepper command to Arduino '{ar.name}'")
+
+    return {"status": "sent", "arduino": ar.name, "pins": cmd.pins, "steps": cmd.steps, "speed": cmd.speed}
 
 @app.post("/api/upload-firmware")
 async def upload_firmware(
