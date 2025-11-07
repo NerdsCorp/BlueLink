@@ -3,27 +3,59 @@ set -e
 
 echo "🚀 Installing BlueLink Advanced (Simplified Version)..."
 
+# --- Determine installation directory ---
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+INSTALL_DIR=""
+
+# Check if we're already in the BlueLink directory
+if [ -f "$SCRIPT_DIR/app.py" ] && [ -f "$SCRIPT_DIR/requirements.txt" ]; then
+    echo "✅ Running from BlueLink directory"
+    INSTALL_DIR="$SCRIPT_DIR"
+    cd "$INSTALL_DIR"
+else
+    echo "❌ Error: This script must be run from the BlueLink project directory"
+    echo "   Expected to find app.py and requirements.txt in: $SCRIPT_DIR"
+    exit 1
+fi
+
 # --- System update & dependencies ---
 echo "📦 Installing system dependencies..."
 sudo apt update && sudo apt install -y python3 python3-venv python3-pip git curl
 
-# --- Clone or update repo ---
-if [ ! -d "BlueLink" ]; then
-  git clone https://github.com/NerdsCorp/BlueLink.git
-  cd BlueLink
-else
-  cd BlueLink
-  git pull
+# --- Validate required files exist ---
+echo "🔍 Validating project files..."
+if [ ! -f "requirements.txt" ]; then
+    echo "❌ Error: requirements.txt not found!"
+    exit 1
+fi
+
+if [ ! -f "app.py" ]; then
+    echo "❌ Error: app.py not found!"
+    exit 1
+fi
+
+if [ ! -f "index.html" ]; then
+    echo "⚠️  Warning: index.html not found. Web UI may not work properly."
 fi
 
 # --- Setup Python virtual environment ---
 echo "🐍 Setting up Python virtual environment..."
+if [ -d "venv" ]; then
+    echo "⚠️  Virtual environment already exists, recreating..."
+    rm -rf venv
+fi
 python3 -m venv venv
 source venv/bin/activate
 
 # --- Install Python dependencies ---
 echo "📦 Installing Python packages..."
+pip install --upgrade pip
 pip install -r requirements.txt
+
+if [ $? -ne 0 ]; then
+    echo "❌ Error: Failed to install Python dependencies"
+    exit 1
+fi
 
 # --- Test run ---
 echo "✅ Installation complete!"
@@ -54,7 +86,6 @@ fi
 read -p "Do you want to enable autostart on boot? [y/N]: " autostart
 
 if [[ "$autostart" == "y" || "$autostart" == "Y" ]]; then
-    INSTALL_DIR=$(pwd)
     SERVICE_PATH="/etc/systemd/system/bluelink.service"
     
     echo "🧰 Creating systemd service at $SERVICE_PATH"
@@ -86,10 +117,11 @@ EOF
     echo "🌐 Access the web UI at: http://$(hostname -I | awk '{print $1}'):8000"
     echo ""
     echo "Useful commands:"
-    echo "  sudo systemctl status bluelink   # Check status"
-    echo "  sudo systemctl stop bluelink     # Stop service"
-    echo "  sudo systemctl restart bluelink  # Restart service"
-    echo "  sudo systemctl logs -u bluelink  # View logs"
+    echo "  sudo systemctl status bluelink    # Check status"
+    echo "  sudo systemctl stop bluelink      # Stop service"
+    echo "  sudo systemctl restart bluelink   # Restart service"
+    echo "  sudo journalctl -u bluelink -f    # View logs (follow mode)"
+    echo "  sudo journalctl -u bluelink -n 50 # View last 50 log lines"
 else
     echo ""
     echo "To start BlueLink now:"
@@ -111,3 +143,4 @@ echo "   ✅ PWM Control (joysticks, triggers)"
 echo "   ✅ Stepper Motor Support"
 echo "   ✅ Firmware Upload from UI"
 echo "   ✅ Advanced Mappings"
+echo ""
